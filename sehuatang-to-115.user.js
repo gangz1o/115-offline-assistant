@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         98tang (sehuatang) 磁力/ED2K 推送到 115 网盘
 // @namespace    http://tampermonkey.net/
-// @version      1.1.0
+// @version      1.1.1
 // @description  自动检测复制的 magnet/ed2k 链接，一键推送到 115 网盘离线下载
 // @author       You
 // @match        *://*.sehuatang.net/*
@@ -16,7 +16,7 @@
 // @connect      115.com
 // @connect      my.115.com
 // @connect      webapi.115.com
-// @run-at       document-end
+// @run-at       document-start
 // ==/UserScript==
 
 ;(function () {
@@ -1368,14 +1368,29 @@
 
 	// ========== 初始化 ==========
 	function init() {
+		// 防止重复初始化
+		if (document.getElementById('push115-panel')) return
+		
 		createConfigPanel()
 		setupCopyListener()
 		console.log('[sehuatang to 115] 插件已加载')
 	}
 
-	if (document.readyState === 'complete') {
-		init()
-	} else {
-		window.addEventListener('load', init)
+	// 尽早初始化：DOM 准备好就执行
+	function earlyInit() {
+		if (document.body) {
+			init()
+		} else {
+			// 如果 body 还不存在，使用 MutationObserver 监听
+			const observer = new MutationObserver((mutations, obs) => {
+				if (document.body) {
+					obs.disconnect()
+					init()
+				}
+			})
+			observer.observe(document.documentElement, { childList: true })
+		}
 	}
+
+	earlyInit()
 })()
