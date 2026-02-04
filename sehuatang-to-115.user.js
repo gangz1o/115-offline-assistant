@@ -29,6 +29,7 @@
 		AUTO_ORGANIZE: '115_auto_organize',
 		AUTO_DELETE_SMALL: '115_auto_delete_small',
 		DELETE_SIZE_THRESHOLD: '115_delete_size_threshold',
+		PANEL_MINIMIZED: '115_panel_minimized',
 	}
 
 	// 默认配置
@@ -38,6 +39,7 @@
 		[CONFIG_KEYS.AUTO_ORGANIZE]: false,
 		[CONFIG_KEYS.AUTO_DELETE_SMALL]: false,
 		[CONFIG_KEYS.DELETE_SIZE_THRESHOLD]: 100,
+		[CONFIG_KEYS.PANEL_MINIMIZED]: true,
 	}
 
 	// 视频文件扩展名
@@ -883,6 +885,11 @@
 
 		document.body.appendChild(panel)
 
+		// 根据保存的状态设置面板折叠状态
+		if (getConfig(CONFIG_KEYS.PANEL_MINIMIZED)) {
+			panel.classList.add('minimized')
+		}
+
 		// 初始化配置值
 		const savedPath = getConfig(CONFIG_KEYS.SAVE_PATH)
 		const savedCid = getConfig(CONFIG_KEYS.SAVE_PATH_CID)
@@ -912,11 +919,13 @@
 		// 最小化按钮
 		document.getElementById('push115-minimize').addEventListener('click', () => {
 			document.getElementById('push115-panel').classList.add('minimized')
+			setConfig(CONFIG_KEYS.PANEL_MINIMIZED, true)
 		})
 
 		// 点击最小化图标恢复
 		document.querySelector('.push115-min-icon').addEventListener('click', () => {
 			document.getElementById('push115-panel').classList.remove('minimized')
+			setConfig(CONFIG_KEYS.PANEL_MINIMIZED, false)
 		})
 
 		// 保存路径（名称:CID 格式）
