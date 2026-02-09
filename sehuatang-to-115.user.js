@@ -13,6 +13,7 @@
 // @grant        GM_getValue
 // @grant        GM_notification
 // @grant        GM_addStyle
+// @grant        GM_cookie
 // @connect      115.com
 // @connect      my.115.com
 // @connect      webapi.115.com
@@ -31,6 +32,7 @@
 		AUTO_DELETE_SMALL: '115_auto_delete_small',
 		DELETE_SIZE_THRESHOLD: '115_delete_size_threshold',
 		PANEL_MINIMIZED: '115_panel_minimized',
+		COOKIE: '115_cookie',
 	}
 
 	// 默认配置
@@ -105,6 +107,7 @@
 			this._uid = null
 			this._sign = null
 			this._time = null
+			this._cookie = getConfig(CONFIG_KEYS.COOKIE)
 		}
 
 		// 通用请求方法
@@ -114,7 +117,7 @@
 					method: method,
 					url: url,
 					headers: this.headers,
-					withCredentials: true,
+					withCredentials: !this._cookie, // 如果有自定义 cookie，就不需要 withCredentials
 					onload: response => {
 						try {
 							const result = JSON.parse(response.responseText)
@@ -134,6 +137,10 @@
 					} else {
 						options.data = data
 					}
+				}
+
+				if (this._cookie) {
+					options.headers['Cookie'] = this._cookie
 				}
 
 				GM_xmlhttpRequest(options)
@@ -441,6 +448,88 @@
 			}
 
 			return { organized: organizedCount, files: organizedFiles }
+		}
+
+		// 获取二维码 Token
+		async getQRCodeToken() {
+			const result = await this.request('https://qrcodeapi.115.com/api/1.0/web/1.0/token/')
+			if (result.state !== 1 || !result.data || !result.data.uid) {
+				throw new Error('获取二维码 Token 失败')
+			}
+			return result.data
+		}
+
+		// 获取二维码状态
+		async getQRCodeStatus(uid, time, sign) {
+			const result = await this.request(
+				`https://qrcodeapi.115.com/get/status/?uid=${uid}&time=${time}&sign=${sign}&_=${Date.now()}`,
+			)
+			if (result.state !== 1 || !result.data) {
+				throw new Error('获取二维码状态失败')
+			}
+			return result.data
+		}
+
+		// 二维码登录（换取 Cookie）
+		async loginQRCode(uid) {
+			const formData = {
+				account: uid,
+				app: 'web',
+			}
+			// 这里需要用 POST 请求 passportapi
+			// 注意：passportapi 返回的数据中包含 cookie
+			const result = await this.request(
+				'https://passportapi.115.com/app/1.0/web/1.0/login/qrcode/',
+				'POST',
+				formData,
+			)
+
+			if (result.state !== 1 || !result.data || !result.data.cookie) {
+				throw new Error(result.error || '登录失败，无法获取 Cookie')
+			}
+
+			// 保存 Cookie
+			if (result.data.cookie) {
+				// 格式化 cookie: UID=xxx; CID=xxx; SEID=xxx
+				let cookieStr = ''
+				if (typeof result.data.cookie === 'object') {
+					const parts = []
+					if (result.data.cookie.UID) parts.push(`UID=${result.data.cookie.UID}`)
+					if (result.data.cookie.CID) parts.push(`CID=${result.data.cookie.CID}`)
+					if (result.data.cookie.SEID) parts.push(`SEID=${result.data.cookie.SEID}`)
+					cookieStr = parts.join('; ')
+				} else {
+					cookieStr = result.data.cookie
+				}
+				
+				this._cookie = cookieStr
+				setConfig(CONFIG_KEYS.COOKIE, cookieStr)
+				
+				// 尝试同步到浏览器（如果支持）
+				if (typeof GM_cookie !== 'undefined') {
+					const cookies = cookieStr.split('; ')
+					cookies.forEach(c => {
+						const [name, value] = c.split('=')
+						if (name && value) {
+							GM_cookie.set({
+								url: 'https://115.com',
+								name: name.trim(),
+								value: value.trim(),
+								domain: '.115.com',
+								path: '/'
+							}, function(error) {
+								if (error) {
+									console.error('GM_cookie set error:', error);
+								} else {
+									console.log('GM_cookie set success:', name);
+								}
+							});
+						}
+					})
+				}
+			}
+
+			return result.data
 		}
 	}
 
@@ -836,6 +925,32 @@
       @keyframes spin {
           to { transform: rotate(360deg); }
       }
+
+      .push115-qrcode-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+      }
+      .push115-qrcode-img {
+          width: 200px;
+          height: 200px;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
+      .push115-qrcode-status {
+          margin-top: 16px;
+          font-size: 14px;
+          color: #86868b;
+          text-align: center;
+      }
+      .push115-qrcode-tip {
+          font-size: 12px;
+          color: #86868b;
+          margin-top: 8px;
+          text-align: center;
+      }
   `)
 
 	// 创建配置面板
@@ -895,8 +1010,11 @@
               <div class="push115-divider"></div>
 
               <div class="push115-section">
-                  <button class="push115-btn push115-btn-primary" id="push115-check-login" style="width: 100%;">
+                  <button class="push115-btn push115-btn-primary" id="push115-check-login" style="width: 100%; margin-bottom: 8px;">
                       检查 115 登录状态
+                  </button>
+                  <button class="push115-btn push115-btn-secondary" id="push115-login-btn" style="width: 100%;">
+                      扫码登录 115 (持久化)
                   </button>
               </div>
           </div>
@@ -1000,6 +1118,11 @@
 				btn.disabled = false
 				btn.textContent = '检查 115 登录状态'
 			}
+		})
+
+		// 扫码登录按钮
+		document.getElementById('push115-login-btn').addEventListener('click', () => {
+			createLoginModal()
 		})
 	}
 
@@ -1221,6 +1344,118 @@
 			}
 		}
 		document.addEventListener('keydown', escHandler)
+	}
+
+	// 创建登录弹窗
+	function createLoginModal() {
+		const existingModal = document.getElementById('push115-modal-overlay')
+		if (existingModal) existingModal.remove()
+
+		const overlay = document.createElement('div')
+		overlay.className = 'push115-modal-overlay'
+		overlay.id = 'push115-modal-overlay'
+		
+		overlay.innerHTML = `
+			<div class="push115-modal" style="width: 320px;">
+				<div class="push115-modal-header">
+					<h3 class="push115-modal-title">📱 115 扫码登录</h3>
+				</div>
+				<div class="push115-modal-body">
+					<div class="push115-qrcode-container">
+						<div id="push115-qrcode-wrapper" style="display: flex; justify-content: center; align-items: center; height: 200px;">
+							<span class="push115-loading" style="border-width: 3px; width: 30px; height: 30px; border-top-color: #007AFF; border-color: rgba(0,122,255,0.2);"></span>
+						</div>
+						<div class="push115-qrcode-status" id="push115-qrcode-status">正在获取二维码...</div>
+						<div class="push115-qrcode-tip">请使用 115 App 扫码</div>
+					</div>
+				</div>
+				<div class="push115-modal-footer">
+					<button class="push115-btn push115-btn-secondary" id="push115-modal-cancel">取消</button>
+				</div>
+			</div>
+		`
+		
+		document.body.appendChild(overlay)
+		
+		let stopPolling = false
+		
+		const cleanup = () => {
+			stopPolling = true
+			overlay.remove()
+			document.removeEventListener('keydown', escHandler)
+		}
+		
+		// 绑定关闭事件
+		document.getElementById('push115-modal-cancel').addEventListener('click', cleanup)
+		overlay.addEventListener('click', e => {
+			if (e.target === overlay) cleanup()
+		})
+		
+		const escHandler = e => {
+			if (e.key === 'Escape') cleanup()
+		}
+		document.addEventListener('keydown', escHandler)
+		
+		// 启动登录流程
+		;(async () => {
+			try {
+				// 1. 获取 Token
+				const tokenData = await api.getQRCodeToken()
+				const { uid, time, sign, qrcode } = tokenData
+				
+				// 2. 显示二维码
+				const wrapper = document.getElementById('push115-qrcode-wrapper')
+				if (wrapper) {
+					wrapper.innerHTML = `<img src="https://qrcodeapi.115.com/api/1.0/web/1.0/qrcode?uid=${uid}&_=${Date.now()}" class="push115-qrcode-img">`
+				}
+				
+				const statusEl = document.getElementById('push115-qrcode-status')
+				if (statusEl) statusEl.textContent = '请扫描二维码'
+				
+				// 3. 轮询状态
+				while (!stopPolling) {
+					try {
+						const statusData = await api.getQRCodeStatus(uid, time, sign)
+						const status = statusData.status // 0:等待, 1:已扫码, 2:已登录, -1:过期, -2:取消
+						
+						if (status === 0) {
+							if (statusEl) statusEl.textContent = '请扫描二维码'
+						} else if (status === 1) {
+							if (statusEl) statusEl.textContent = '已扫码，请在手机上确认'
+						} else if (status === 2) {
+							if (statusEl) statusEl.textContent = '登录成功！正在获取 Cookie...'
+							
+							// 4. 换取 Cookie
+							await api.loginQRCode(uid)
+							if (statusEl) statusEl.textContent = '✅ 登录完成'
+							
+							// 短暂延迟后关闭
+							setTimeout(() => {
+								cleanup()
+								showStatus('success', '✅ 115 登录成功，Cookie 已保存')
+							}, 1000)
+							break
+						} else if (status === -1) {
+							if (statusEl) statusEl.textContent = '二维码已过期，请重试'
+							break
+						} else if (status === -2) {
+							if (statusEl) statusEl.textContent = '已取消登录'
+							break
+						}
+						
+						await new Promise(r => setTimeout(r, 1500))
+					} catch (e) {
+						console.error('轮询状态错误:', e)
+						// 继续轮询，除非连续多次错误（这里简化处理）
+						await new Promise(r => setTimeout(r, 2000))
+					}
+				}
+			} catch (e) {
+				console.error('登录流程错误:', e)
+				const statusEl = document.getElementById('push115-qrcode-status')
+				if (statusEl) statusEl.textContent = '❌ 发生错误: ' + e.message
+			}
+		})()
 	}
 
 	// ========== 监控任务并处理 ==========
