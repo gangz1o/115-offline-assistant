@@ -255,14 +255,14 @@ function bindEvents() {
 		const btn = document.getElementById('push115-check-login')
 		btn.disabled = true
 		btn.innerHTML = '<img src="icons/check.png" width="16" height="16">' + t('processing')
-		try {
-			const response = await sendMessage('API_REQUEST', {
-				url: 'https://webapi.115.com/files?cid=0&limit=1',
-				method: 'GET',
-			})
-			const isLogin = response.data && response.data.state
-			showStatus(isLogin ? 'success' : 'error', isLogin ? t('login_success') : t('login_fail'))
-		} catch (e) {
+			try {
+				const response = await sendMessage('API_REQUEST', {
+					url: 'https://my.115.com/?ct=guide&ac=status',
+					method: 'GET',
+				})
+				const isLogin = response.data && response.data.state === true
+				showStatus(isLogin ? 'success' : 'error', isLogin ? t('login_success') : t('login_fail'))
+			} catch (e) {
 			showStatus('error', t('login_fail'))
 		}
 		btn.disabled = false
@@ -397,14 +397,18 @@ async function startLoginFlow(selectedApp) {
 						})
 
 						const loginResult = loginResp.data
-						if (!loginResult || loginResult.state !== 1) {
+						if (!loginResult || loginResult.state !== 1 || !loginResult.data?.cookie) {
 							throw new Error(loginResult?.error || '登录失败')
 						}
+
+						await sendMessage('SET_COOKIE', {
+							cookie: loginResult.data.cookie,
+						})
 
 						if (statusEl) statusEl.textContent = ' 登录完成'
 						setTimeout(() => {
 							hideLoginModal()
-							showStatus('success', ` 115 登录成功 (${selectedApp})`)
+							showStatus('success', ` 115 登录成功 (${selectedApp})，Cookie 已保存`)
 						}, 1000)
 					} catch (loginErr) {
 						console.error('Login Error:', loginErr)
