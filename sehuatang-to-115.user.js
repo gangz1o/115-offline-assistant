@@ -1204,9 +1204,9 @@
 			try {
 				const isLoggedIn = await api.checkLogin()
 				if (isLoggedIn) {
-					showStatus('success', '✅ 已登录 115 网盘')
+					showStatus('success', ' 已登录 115 网盘')
 				} else {
-					showStatus('error', '❌ 未登录，请先访问 115.com 登录')
+					showStatus('error', ' 未登录，请先访问 115.com 登录')
 				}
 			} catch (e) {
 				showStatus('error', '检查失败: ' + e.message)
@@ -1421,7 +1421,7 @@
 			} catch (e) {
 				confirmBtn.disabled = false
 				confirmBtn.textContent = '确定推送'
-				showStatus('error', '❌ 推送失败: ' + e.message)
+				showStatus('error', ' 推送失败: ' + e.message)
 			}
 		})
 
@@ -1597,16 +1597,16 @@
 							// 4. 换取 Cookie (带 App 参数)
 							try {
 								await api.loginQRCode(uid, selectedApp)
-								if (statusEl) statusEl.textContent = '✅ 登录完成'
+								if (statusEl) statusEl.textContent = ' 登录完成'
 
 								// 短暂延迟后关闭
 								setTimeout(() => {
 									cleanup()
-									showStatus('success', `✅ 115 登录成功 (${selectedApp})，Cookie 已保存`)
+									showStatus('success', ` 115 登录成功 (${selectedApp})，Cookie 已保存`)
 								}, 1000)
 							} catch (loginErr) {
 								console.error('Login Error:', loginErr)
-								if (statusEl) statusEl.textContent = '❌ 获取Cookie失败: ' + loginErr.message
+								if (statusEl) statusEl.textContent = ' 获取Cookie失败: ' + loginErr.message
 								// Stop polling on critical failure to avoid infinite loop
 								stopPolling = true
 							}
@@ -1629,7 +1629,7 @@
 			} catch (e) {
 				console.error('登录流程错误:', e)
 				const statusEl = document.getElementById('push115-qrcode-status')
-				if (statusEl) statusEl.textContent = '❌ 发生错误: ' + e.message
+				if (statusEl) statusEl.textContent = ' 发生错误: ' + e.message
 			}
 		}
 	}
@@ -1683,7 +1683,7 @@
 					if (task.status === 2 || task.percentDone === 100) {
 						if (!completed) {
 							completed = true
-							showStatus('info', '✅ 任务完成，开始处理文件...', 0)
+							showStatus('info', ' 任务完成，开始处理文件...', 0)
 							setProcessingState(true, '任务完成，开始处理文件...')
 							setTimeout(() => processFiles({ taskName, taskFileCid }), 5000)
 						}
@@ -1813,7 +1813,7 @@
 				}
 
 				if (messages.length > 0) {
-					showStatus('success', `✅ ${messages.join('，')}`)
+					showStatus('success', ` ${messages.join('，')}`)
 					setProcessingState(false)
 					GM_notification({
 						title: '115 处理完成',
