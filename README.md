@@ -1,14 +1,14 @@
 <p align="right">
-  <a href="README_CN.md">🇨🇳 中文</a>
+  <a href="README_EN.md">�� English</a>
 </p>
 
 <h1 align="center">
   <img src="extension/icons/logo.png" width="64" height="64" alt="logo"><br>
-  115 Offline Helper
+  115 离线助手
 </h1>
 
 <p align="center">
-  <strong>Detect magnet/ed2k links and push them to your 115.com cloud offline download with one click.</strong>
+  <strong>自动检测 magnet/ed2k 链接，一键推送到 115 网盘离线下载。</strong>
 </p>
 
 <p align="center">
@@ -19,83 +19,85 @@
 
 ---
 
-## ✨ Features
+## ✨ 功能特性
 
-- 🔍 **Auto-detect links** — Detect magnet and ed2k links on any web page (opt-in)
-- 📋 **Clipboard support** — Paste links directly in the popup to push
-- 📥 **One-click push** — Push links to 115.com offline download queue instantly
-- 📁 **Custom save directory** — Choose which 115 folder to save downloads to
-- 🗑️ **Auto-delete small files** — Remove files under a specified size (e.g., ads)
-- 📂 **Auto-organize videos** — Move video files into folders based on filename
-- 📱 **QR code login** — Log into 115.com directly from the extension popup
-- 🌐 **Bilingual UI** — Supports both Chinese and English
+- 🔍 **自动检测链接** — 自动检测任意网页上的 magnet 和 ed2k 链接（可选开启）
+- 📋 **剪贴板支持** — 在弹出窗口直接粘贴链接推送
+- 📥 **一键推送** — 即时推送链接到 115 网盘离线下载队列
+- 📁 **自定义保存路径** — 选择离线下载的保存目录
+- 🗑️ **自动删除小文件** — 自动删除低于指定大小的文件（如广告文件）
+- 📂 **自动整理视频** — 自动将视频文件按名称归类到文件夹
+- 📱 **扫码登录** — 在扩展弹窗中直接扫码登录 115 账号
+- 🌐 **中英双语** — 界面支持中文和英文
 
-## 📦 Installation
+## 📦 安装方法
 
-<!-- ### Chrome Web Store (coming soon) -->
+<!-- ### Chrome 应用商店（审核通过后补充） -->
 
-### Manual Install
+### 手动安装
 
-1. **Download the source code**
+1. **下载扩展**
+
+   前往 [Releases](https://github.com/gangz1o/115-offline-helper/releases/latest) 页面，下载 `115-offline-helper_v*.zip` 并解压。
+
+   或通过 Git 克隆仓库：
 
    ```bash
    git clone https://github.com/gangz1o/115-offline-helper.git
    ```
 
-   Or click the green **Code** button → **Download ZIP** and unzip.
+2. **打开扩展管理页面**
 
-2. **Open Extensions page**
+   在浏览器地址栏输入 `chrome://extensions/`。
 
-   Navigate to `chrome://extensions/` in your browser.
+3. **开启开发者模式**
 
-3. **Enable Developer Mode**
+   打开右上角的 **开发者模式** 开关。
 
-   Toggle the **Developer mode** switch in the top-right corner.
+4. **加载扩展**
 
-4. **Load the extension**
+   点击 **加载已解压的扩展程序**，选择项目中的 `extension` 文件夹。
 
-   Click **Load unpacked** and select the `extension` folder from the project.
+5. **完成！**
 
-5. **Done!**
+   扩展图标会出现在工具栏中，建议点击 📌 固定方便使用。
 
-   The extension icon will appear in your toolbar. Pin it for easy access.
+> **💡 提示：** 更新时运行 `git pull` 拉取最新代码，然后在 `chrome://extensions/` 页面点击 ↻ 刷新按钮即可。
 
-> **💡 Tip:** To update, run `git pull` and click the ↻ refresh button on the extension card at `chrome://extensions/`.
+## 🚀 使用说明
 
-## 🚀 Usage
+1. **登录** — 点击扩展图标 → **扫码登录** → 用 115 手机客户端扫描二维码。
+2. **设置保存目录** — 在主页下拉框中选择，或在设置页添加自定义路径（格式：`文件夹名:CID`）。
+3. **推送链接** — 两种方式：
+   - **弹窗推送**：在输入框中粘贴 magnet/ed2k 链接，点击 **推送**。
+   - **自动检测**：在设置中开启"自动检测链接"，浏览任意网页时自动检测并弹出一键推送确认框。
 
-1. **Login** — Click the extension icon → **Scan to Login** → scan QR code with the 115 mobile app.
-2. **Set save directory** — Choose a folder from the dropdown on the Home tab, or add custom paths in Settings (`FolderName:CID` format).
-3. **Push links** — Two ways:
-   - **Popup**: Paste magnet/ed2k links into the input box and click **Push**.
-   - **Auto-detect**: Enable "Auto detect links" in Settings to detect links on any webpage with a one-click confirmation dialog.
+### 设置项
 
-### Settings
+| 设置 | 说明 |
+|------|------|
+| 保存目录列表 | 按 `目录名:CID` 格式添加，每行一个 |
+| 自动检测链接 | 通过内容脚本在所有页面检测链接 |
+| 自动删除小文件 | 删除小于指定 MB 的文件 |
+| 自动整理视频文件 | 将视频文件按文件名归类到文件夹 |
 
-| Setting | Description |
-|---------|-------------|
-| Save directory list | Add folders in `Name:CID` format, one per line |
-| Auto-detect links | Detect links on all pages via content script |
-| Auto-delete small files | Remove files smaller than specified MB |
-| Auto-organize videos | Move video files into named folders |
+## ❓ 常见问题
 
-## ❓ FAQ
+**Q: 如何获取文件夹 CID？**
+> 在 [115.com](https://115.com) 网页版打开目标文件夹，查看地址栏：`https://115.com/?cid=1234567`，`cid=` 后面的数字就是 CID。
 
-**Q: How to find a folder's CID?**
-> Open the folder in [115.com](https://115.com), look at the URL: `https://115.com/?cid=1234567` — the number after `cid=` is the CID.
+**Q: 提示未登录？**
+> 点击扩展图标 → **扫码登录**，用 115 手机客户端扫码即可。
 
-**Q: "Not logged in" error?**
-> Click extension icon → **Scan to Login**, scan with 115 mobile app.
+**Q: 自动检测不生效？**
+> 确保在设置中开启了"自动检测链接"。浏览器会请求额外权限，请点击允许。
 
-**Q: Auto-detect not working?**
-> Enable "Auto detect links" in Settings. The browser will ask for additional permissions — click Allow.
+## 🔒 隐私
 
-## 🔒 Privacy
-
-- All data is stored locally via `chrome.storage.local`
-- No user data is collected, transmitted, or shared with third parties
-- Only communicates with `*.115.com` domains
-- [Full Privacy Policy](https://gangz1o.github.io/115-offline-helper/privacy-policy.html)
+- 所有数据通过 `chrome.storage.local` 保存在本地
+- 不收集、传输或共享任何用户数据
+- 仅与 `*.115.com` 域名通信
+- [完整隐私政策](https://gangz1o.github.io/115-offline-helper/privacy-policy.html)
 
 ## 📄 License
 
